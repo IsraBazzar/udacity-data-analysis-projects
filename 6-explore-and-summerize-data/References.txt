@@ -1,0 +1,11 @@
+[1] Understanding Factors - https://swcarpentry.github.io/r-novice-inflammation/12-supp-factors/
+
+[2] Colors(ggplot2) - http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/
+
+[3] R Functions - https://www.datamentor.io/r-programming/function/
+
+[4] Change gplot2 label size - https://stackoverflow.com/questions/14942681/change-size-of-axes-title-and-label-in-ggplot2
+ ,https://stackoverflow.com/questions/25061822/ggplot-geom-text-font-size-control
+ 
+[5] ggpair Documentation - https://www.rdocumentation.org/packages/GGally/versions/1.4.0/topics/ggpairs
+[6] ggscatmat Documentation - https://www.rdocumentation.org/packages/GGally/versions/1.4.0/topics/ggscatmat

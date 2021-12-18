@@ -1,0 +1,480 @@
+---
+title: "Explore and Summerize Data Project"
+author: "IsraBazzar _ For Udacity Data Analysis Nanodegree" 
+date: "7/2/2019"
+output: html_document
+---
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, packages}
+#install.packages("GGally")
+
+library(ggplot2)
+library(gridExtra)
+library(GGally)
+library(dplyr)
+
+```
+
+
+# Data Set: Red Wine Quality
+#### [Source](https://s3.amazonaws.com/udacity-hosted-downloads/ud651/wineQualityReds.csv)
+#### [Variables Description Text File](https://s3.amazonaws.com/udacity-hosted-downloads/ud651/wineQualityInfo.txt)
+
+>This tidy data set contains 1,599 red wines with 11 variables on the chemical properties of the wine. At least 3 wine experts rated the quality of each wine, providing a rating between 0 (very bad) and 10 (very excellent).
+
+## General Data Investigation
+
+#### Include our data set
+Include the data in our file and take a quick glance to variables data types and names
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Load_the_Data}
+wine_data <- read.csv('wineQualityReds.csv')
+
+```
+
+#### View Information and Summary about Variables
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+names(wine_data)
+```
+
+
+Convert Quaity Variable from integer to Factor, And view details about all factors(Names, Data Types And Data values)
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Quality_to_Factor}
+wine_data$quality_num <- wine_data$quality
+wine_data$quality <- factor(wine_data$quality, ordered = TRUE)
+
+str(wine_data)
+```
+
+
+### Questions
+1. What are main factors related to quality
+2. How are factors related to others
+Answers and even more questions and observations will come up through deeper digging and exploring
+
+
+# Univariate Plots Section
+
+Let's first view a detailed statistical summary to have some conclusions and help plotting each variable according to it's values 
+### Statistical Summary For All Variables
+```{r echo=FALSE, Data_Statistical_Summary}
+# Exclude X (index column)
+summary(wine_data[2: 13])
+```
+
+Notes: 
+1- Density and pH: Median and Mean values are almost the same for both variables, which means these variables most probably are Normally distributed,
+
+2- total.sulfur.dioxide, residual.sugar and chlorides: Max values for both variables are higher than 4 times than 3rd quartile values, which give us a thought for having many outliers and long right-sided tail 
+
+3- Quality: Minimum rank is 3 and 95% of the entries are ranked 5, 6 or 7. These values in my opinion are not reasonable, it may refers to data collection methods, questions here, How experts ranked the samples, are all the samples collected from same region or different regions 
+Given that almost all entries have middle ranking will reduce our study's credibility.
+
+Let's investigate more through histograms
+
+```{r echo=FALSE, Customized_Theme}
+
+# generating new theme 
+# Source: https://www.r-bloggers.com/custom-themes-in-ggplot2/
+theme_new <- function(base_size = 11,
+                      base_family = "",
+                      base_line_size = base_size / 170,
+                      base_rect_size = base_size / 170){
+  theme_minimal(base_size = base_size, 
+                base_family = base_family,
+                base_line_size = base_line_size) %+replace%
+    theme(
+      plot.title = element_text(
+        color = rgb(25, 43, 65, maxColorValue = 255), 
+        face = "bold",
+        hjust = 0),
+      axis.title = element_text(
+        color = rgb(105, 105, 105, maxColorValue = 255),
+        size = rel(0.75)),
+      axis.text = element_text(
+        color = rgb(105, 105, 105, maxColorValue = 255),
+        size = rel(0.5)),
+      panel.grid.major = element_line(
+        rgb(105, 105, 105, maxColorValue = 255),
+        linetype = "dotted"),   
+      panel.grid.minor = element_line(
+        rgb(105, 105, 105, maxColorValue = 255),
+        linetype = "dotted", 
+        size = rel(4)),   
+      
+      complete = TRUE
+    )
+}
+```
+
+```{r echo=FALSE, UniHistogram_Plot_Function}
+
+# Plot Histogram Function for one variable
+plot_hist1 <- function(column_name, data_frame, bin_width = 0.05, fill_color = '#999999', xLabel = "", yLabel = "", xLimits = c(min(column_name),max(column_name)))
+{
+  p <- ggplot(aes(x = column_name), data = data_frame) +
+    geom_histogram(binwidth = bin_width, color = 'black', fill = fill_color) +
+    coord_cartesian(xlim = xLimits) +
+    xlab(xLabel) +
+    ylab(yLabel) +
+    geom_vline(xintercept = mean(column_name), 
+                color = "red", size=0.5)+
+    theme_new()
+    
+  return(p)
+}
+
+```
+
+#### Histogram Plots For All Factors
+ 
+#####Histograms Version 1
+Red vertical line marks the mean for each factor values
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+p1 <- plot_hist1(wine_data$fixed.acidity, wine_data, 
+                 xLabel = "fixed.acidity", bin_width = 0.5) 
+p2 <- plot_hist1(wine_data$volatile.acidity, wine_data,
+                 xLabel = "volatile.acidity" )
+p3 <- plot_hist1(wine_data$citric.acid, wine_data, 
+                 xLabel = "citric.acid") 
+p4 <- plot_hist1(wine_data$residual.sugar, wine_data, 
+                 xLabel = "residual.sugar", bin_width = 0.1) 
+p5 <- plot_hist1(wine_data$chlorides, wine_data, 
+                 xLabel = "chlorides", bin_width = 0.01) 
+p6 <- plot_hist1(wine_data$free.sulfur.dioxide, wine_data, 
+                 xLabel = "free.sulfur.dioxide", bin_width = 5) 
+p7 <- plot_hist1(wine_data$total.sulfur.dioxide, wine_data, 
+                 xLabel = "total.sulfur.dioxide", bin_width = 5) 
+p8 <- plot_hist1(wine_data$density, wine_data, 
+                 xLabel = "density", bin_width = 0.0005) 
+p9 <- plot_hist1(wine_data$pH, wine_data, 
+                 xLabel = "pH") 
+p10 <- plot_hist1(wine_data$sulphates, wine_data , 
+                  xLabel = "sulphates") 
+p11 <- plot_hist1(wine_data$alcohol, wine_data, 
+                  xLabel = "alcohol", bin_width = 0.2) 
+
+
+grid.arrange(p1,p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, ncol = 4)
+
+```
+
+
+#### Summary:
+1. Density and pH have almost perfect Noraml Histograms which assures our thoughts above, 
+Question here: Is it even possible to have like those perfect shapes from real data? is our data too tidy? How does the sample selected? What is the precision of the data for these two variables?
+
+2. chlorides and residual.sugar, sulphates and total.sulfur.dioxide: Note how these plots have very long tail on the right (more than the half of the distribution), I will cut these outlies to have a closer look on other data 
+
+3. alcohol distribution: has a strange vary long bar: 
+Question: Is there a specified alcohol amount that set as most common or recommended to achieve by wine producers?
+
+4. All Histograms are either normal, left-skewed or in between  
+
+
+Histograms Version 2: 
+
+Cutting long tails(outlier values) to a reasonable x - range 
+
+```{r echo=FALSE, Univariate_Plots}
+
+
+p4 <- plot_hist1(wine_data$residual.sugar, wine_data, 
+                 xLabel = "residual.sugar", xLimits = c(0.9,7), bin_width = 0.1) 
+p5 <- plot_hist1(wine_data$chlorides, wine_data, 
+                 xLabel = "chlorides", xLimits = c(0.01, 0.175), bin_width = 0.01) 
+ 
+p7 <- plot_hist1(wine_data$total.sulfur.dioxide, wine_data, 
+                 xLabel = "total.sulfur.dioxide", xLimits = c(5,160), bin_width = 5) 
+
+p10 <- plot_hist1(wine_data$sulphates, wine_data , 
+                  xLabel = "sulphates", xLimits = c(0.33, 1.4)) 
+
+
+grid.arrange(p4, p5, p7, p10, ncol = 2)
+
+```
+
+
+
+##### Plot Quality (ordered factor: discrete data)
+
+```{r echo=FALSE}
+qplot(x = quality, data = wine_data, ylab = 'Count')+
+  theme_light()+
+  geom_bar(aes(fill = factor(quality)))
+
+```
+
+Ranks are described to be in a range 0 - 10 for 0 as worse and 10 as best, Looking at this histogram a Question poped up for me: Are the experts got ease in the ranking process or there were some restrictions for them to follow, why we don't have any sample at the worst 2 degrees neither at the best two?
+
+
+## Univariate Analysis and Summary
+
+In addition t comments and summaries above here are some main summary notes about Univariante analysis
+
+### What is the structure of your dataset?
+
+There are 1599 samples in the dataset with 12 chemical features:
+   1- fixed acidity
+   2 - volatile acidity
+   3 - citric acid
+   4 - residual sugar
+   5 - chlorides
+   6 - free sulfur dioxide
+   7 - total sulfur dioxide
+   8 - density
+   9 - pH
+   10 - sulphates
+   11 - alcohol
+   
+   12 - quality (converted to factor variable)
+   13 - quality_num (kept as the old one)
+   
+All are numerical, but created new column for The Quality feature to ordered factor numeric levels from 3 to 8 with 3 is the worse.
+
+There is no empty (NULL) values in the data set.
+
+Other observations:
+- Most samples are of quality values 5 and 6
+- pH and density have Normal distribution
+- chlorides, residual.sugar, sulphates and total.sulfur.dioxide have very big outlier values 
+
+### What is/are the main feature(s) of interest in your dataset?
+Our main interest is to explore how each factor affects the quality of wine, I will investigate all factors to inspect the influencers on quality 
+
+### What other features in the dataset do you think will help support your investigation into your feature(s) of interest?
+alcohol, pH, sugar and density had my interests the most I will explore in details in coming sections if they are really factors of interest or not
+
+### Did you create any new variables from existing variables in the dataset?
+Since our data is very tidy data set we didn't need much changes and edits, I have only changed quality to categorial variable (factor with levels) 
+
+### Of the features you investigated, were there any unusual distributions? Did you perform any operations on the data to tidy, adjust, or change the form of the data? If so, why did you do this?
+chlorides and residual.sugar, sulphates and total.sulfur.dioxide: have somehow big outliers (more than the half of the distribution), I cut those values from x-axis on histogram plots, to easily visualize other data
+
+
+
+# Bivariate Plots
+## Bivariate Analysis and Summary
+
+Plot quality versus each property to see if there is any sigificant relations
+
+```{r echo=FALSE, Plot_quality}
+qplot(x = pH, y = ..count.., 
+      data = wine_data, 
+      xlab = 'pH',
+      ylab = 'count',
+      binwidth = 0.05, geom = 'freqpoly', color = quality)
+
+```
+
+Plot pH Line chart grouped by quality
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+qplot(x = residual.sugar, y = ..count.., 
+      data = wine_data, 
+      xlab = 'Sugar Log10 Scaled',
+      ylab = 'Count',
+      binwidth = 0.1, geom = 'freqpoly', color = quality)+
+  scale_x_continuous() +
+  scale_x_log10()+
+  theme_light()
+```
+ Scaling with Log10 gives more clear and comfort histogram but we can't say anything about our main interest(wine quality)
+
+#### Box plots for all variables vs quality
+
+Since above plots are useless, we can't make conclusions from them about the relation between quality and any other property,<br/>
+The best function to explore here is median value, since the number of samples per each quality are inconsistable, 
+The best plot to visualize the median value and quartiles are box plots 
+Below I will plot box plot for each variable grouped by quality, Also box plots are clear and cool to visualize catgorical variable grouping.
+
+```{r echo=FALSE}
+
+p_ph <- qplot(x=quality, y=pH, data=wine_data, geom = 'boxplot')
+p_ph + theme_light()
+
+p_fixed <- qplot(x=quality, y=fixed.acidity, data=wine_data, geom = 'boxplot')+ theme_light()
+
+p_volatile <- qplot(x=quality, y=volatile.acidity, data=wine_data, geom = 'boxplot') + theme_light()
+
+p_citric <- qplot(x=quality, y=citric.acid, data=wine_data, geom = 'boxplot')+ theme_light()
+
+p_sugar <- qplot(x=quality, y=residual.sugar, data=wine_data, geom = 'boxplot')+ 
+  coord_cartesian(ylim = c(0, 6)) +
+  theme_light()
+
+p_chloride <- qplot(x=quality, y=chlorides, data=wine_data, geom = 'boxplot')+ 
+  coord_cartesian(ylim = c(0, 0.2))+
+  theme_light()
+
+p_freesulfur <- qplot(x=quality, y=free.sulfur.dioxide, data=wine_data, geom = 'boxplot') + theme_light()
+
+
+p_totalsulfur<- qplot(x=quality, y=total.sulfur.dioxide, data=wine_data, geom = 'boxplot')+
+  coord_cartesian(ylim = c(0, 120))+
+  theme_light()
+
+p_density<- qplot(x=quality, y=density, data=wine_data, geom = 'boxplot')+ 
+  theme_light()
+
+p_alcohol<- qplot(x=quality, y=alcohol, data=wine_data, geom = 'boxplot')+ 
+  theme_light()
+
+p_sulphates<- qplot(x=quality, y=sulphates, data=wine_data, geom = 'boxplot')+ 
+  coord_cartesian(ylim = c(0, 1))+
+  theme_light()
+
+grid.arrange(p_sugar, p_chloride, p_sulphates, p_totalsulfur, ncol=2)
+
+
+```
+Summary: 
+Chlorides: higher quality samples have less chlorides
+Sugar median is almost the same for all qualities
+Sulphates medians are bigger for higher qualities
+There is no clear relation between sulfur dioxides and quality, though notice that the most frequent quality have the higher median for total sulfur dioxide
+
+Here I would like to take chlorides and sulphates in consideration
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+grid.arrange(p_volatile, p_citric, p_fixed, p_freesulfur, ncol=2)
+```
+
+Summary:
+Volatile acidity medians are clearly decreasing by quality increase
+While on the other hand citric acid decrease with the quality rate
+
+fixed quality medians have small differences even though it seems for higher quality samples to have higher fixed.acidity
+
+free.sulfur.dioxide: no clear linear relationship such as total.sulfur.dioxide
+>Question poped up! whats the difference or whats the relation between total sulfer and free sulfer 
+
+
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+grid.arrange(p_ph, p_alcohol, p_density, ncol=2)
+```
+
+This interesting, isn't it?! Clearly higher quality registered higher alcohol median but the most frequent rank 5 got the lowest alcohol value
+
+Now, Look at the pH and density plots there is a small differences between quality 3 median and quality 8 but for higher rank samples registered less pH 
+
+same for density, higher quality have less density though it's a small difference but it can be significant, this needs more statiscal experemental studies to conclude 
+
+
+
+## Scatter Plots For All Variables
+Spot linear relations between variables, through scatter plots and correlation(using pearson method) 
+Note that quality since it's not numerical are not included 
+ 
+```{r echo=FALSE, Scatter_plots}
+ggscatmat(wine_data, columns = 2:13, alpha=0.1)+
+  theme_light(base_size = 8)
+
+
+```
+Strong Relations According to correlation coefficient > 0.5 or <-0.5
+corr: x vs. y 
+0.67: citric.acid vs. fixed.acidity
+0.67: density vs. fixed acidity
+-0.68: pH vs. fixed acid (negative linear relation)
+-0.54: pH vs. Citric Acid
+0.67: total sulfur dioxide vs. free sulfur dioxide
+This somehow answers my question above about the relation between these two variables
+
+-0.55: citric acid vs. volatile acid 
+
+
+# Multivariate Plots
+## Multivariate Analysis and Summary
+
+#### Plot Some of Explored Linear Relation grouped by quality(colors)
+pH vs. Fixed acidity
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(wine_data, aes(pH, fixed.acidity)) + 
+  geom_point(aes(colour = factor(quality)),alpha=0.2) +
+  stat_smooth(method = "lm", color = "red") +
+  theme_light()
+```
+
+Density vs. Fixed Acidity
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(wine_data, aes(density, fixed.acidity)) + 
+  geom_point(aes(colour = factor(quality)),alpha=0.2) +
+  stat_smooth(method = "lm", color = "red") +
+  theme_light()
+```
+There is a moderate linear relationship between fixed acidity and density.
+Notice also that the yellow circles(highest quality 8) are almost above the line > Less density but i'm not sure about fixed acidity 
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(wine_data, aes(citric.acid, volatile.acidity)) + 
+  geom_point(aes(colour = factor(quality)),alpha=0.2) +
+  stat_smooth(method = "lm", color = "red") +
+  theme_light()
+  
+```
+
+This negative moderate linear relation (since cor = 0.55 < 0.7 ) makes sence, according to our notes above about their relation with quality 
+negative relation: volatile.acidity vs. quality
+positive relation: citric acid vs. quality
+
+
+# Final Plots and Summary
+
+Accoording to plots above, The most related variables to quality was, Density, alcohol, citric acid, volatile acidity 
+
+
+## One Variable 
+
+The most interesting histograms for me as discussed were plots for ph and density, because they are perfectley normal , on the other hand: alcohol and citric acid also have interesting left sided histograms, and it's clarified later about the lest two they are significant to study
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+grid.arrange(p3, p11, p8, p9, ncol = 2)
+```
+
+I also discussed the hazard column in alcohol histogram, is it related with extremly high frequency for some quality values?
+
+## Two Variables Plot 
+
+The most related variables to quality according to box-plots
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+grid.arrange(p_alcohol, p_citric, p_density, p_chloride, ncol = 2)
+
+```
+
+Now lets find correlation values and see if it comes with our analysis,
+For density, chlorides, alcohol, aand citric acid respectively
+
+```{r echo=FALSE}
+
+cor(wine_data$quality_num, wine_data$density)
+cor(wine_data$quality_num, wine_data$chlorides)
+cor(wine_data$quality_num, wine_data$alcohol)
+cor(wine_data$quality_num, wine_data$citric.acid)
+
+
+```
+
+# Reflection
+
+According to all plots and finally correlation coefficients the most affect is excpected from alcohol on the quality of Red Wine. 
+Limitations and difficulties: Adding more data variables will help us to have more precise statistics but to have a final causation we need to do expermental tests on a wider data set, 
+This tests and studies about wine quality will help for wine producers to have more qualified samples, But also to make the test more practical I suggest to studay financial parts, about price and components prices per their affect on the quality 
+
+
+------------------
+The End
+
+
+
